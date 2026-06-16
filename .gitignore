@@ -1,0 +1,33 @@
+# Build outputs
+**/bin/
+**/obj/
+publish/
+publish-msix/
+staging-msix/
+**/..publish/
+*.msix
+*.msixbundle
+
+# Generated assets (regenerar con GenerateAssets.ps1)
+QuickPreview/Assets/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userprefs
+
+# Rider
+.idea/
+
+# NuGet
+*.nupkg
+packages/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log

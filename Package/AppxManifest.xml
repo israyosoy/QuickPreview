@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ANTES DE EMPAQUETAR, rellena los tres campos marcados con TODO:
+    1. Identity/@Name       → El nombre que reservaste en Partner Center
+                              (ej. "TuPublisherID.QuickPreview")
+    2. Identity/@Publisher  → El CN del certificado de tu cuenta Partner Center
+                              (ej. "CN=Tu Nombre, O=Tu Empresa, C=MX")
+    3. Properties/PublisherDisplayName → Tu nombre visible en la Store
+
+  El resto de los valores son correctos y no necesitan cambio.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity
+    Name="TODO_TuPublisherID.QuickPreview"
+    Publisher="CN=TODO_TuPublisher"
+    Version="1.0.0.0"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>QuickPreview</DisplayName>
+    <PublisherDisplayName>TODO_TuNombreVisible</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <Description>Previsualiza cualquier archivo al instante desde el Explorador de Windows.</Description>
+  </Properties>
+
+  <Dependencies>
+    <!-- Windows 10 1809 (build 17763) es el mínimo para Desktop Bridge con MSIX -->
+    <TargetDeviceFamily
+      Name="Windows.Desktop"
+      MinVersion="10.0.17763.0"
+      MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="es-ES" />
+    <Resource Language="en-US" />
+  </Resources>
+
+  <Applications>
+    <Application
+      Id="QuickPreview"
+      Executable="QuickPreview.exe"
+      EntryPoint="Windows.FullTrustApplication">
+
+      <uap:VisualElements
+        DisplayName="QuickPreview"
+        Description="Previsualiza cualquier archivo al instante"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile
+          Wide310x150Logo="Assets\Wide310x150Logo.png"
+          Square310x310Logo="Assets\Square310x310Logo.png"
+          ShortName="QuickPreview" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png" BackgroundColor="#1E1E1E" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <!--
+      runFullTrust es requerido para toda app Win32/WPF empaquetada.
+      La Store permite esto pero realiza una revisión adicional.
+      En la descripción de la Store explica que la app intercepta
+      la tecla Espacio para activar previsualizaciones.
+    -->
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+
+</Package>
