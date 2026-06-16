@@ -56,7 +56,7 @@ QuickPreview **nunca ejecuta** el contenido de los archivos que previsualiza:
 - Microsoft Edge / WebView2 Runtime (incluido en Windows 10/11)
 
 ```powershell
-git clone https://github.com/TuUsuario/QuickPreview.git
+git clone https://github.com/israyosoy/QuickPreview.git
 cd QuickPreview
 
 # Generar íconos y assets
