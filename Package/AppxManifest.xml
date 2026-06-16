@@ -1,14 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  ANTES DE EMPAQUETAR, rellena los tres campos marcados con TODO:
-    1. Identity/@Name       → El nombre que reservaste en Partner Center
-                              (ej. "TuPublisherID.QuickPreview")
-    2. Identity/@Publisher  → El CN del certificado de tu cuenta Partner Center
-                              (ej. "CN=Tu Nombre, O=Tu Empresa, C=MX")
-    3. Properties/PublisherDisplayName → Tu nombre visible en la Store
-
-  El resto de los valores son correctos y no necesitan cambio.
--->
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
@@ -16,14 +6,14 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="TODO_TuPublisherID.QuickPreview"
-    Publisher="CN=TODO_TuPublisher"
+    Name="BorntoStream.QuickPreview"
+    Publisher="CN=BA56B2C9-A8BB-4A47-AF2D-7F485025B045"
     Version="1.0.0.0"
     ProcessorArchitecture="x64" />
 
   <Properties>
     <DisplayName>QuickPreview</DisplayName>
-    <PublisherDisplayName>TODO_TuNombreVisible</PublisherDisplayName>
+    <PublisherDisplayName>Born to Stream</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
     <Description>Previsualiza cualquier archivo al instante desde el Explorador de Windows.</Description>
   </Properties>

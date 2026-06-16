@@ -17,26 +17,40 @@
 $ErrorActionPreference = "Stop"
 $ProjectRoot = $PSScriptRoot
 
-# ── 1. Buscar makeappx.exe ─────────────────────────────────────────────────────
-$sdkRoots = @(
-    "C:\Program Files (x86)\Windows Kits\10\bin",
-    "C:\Program Files\Windows Kits\10\bin"
-)
-$makeappx = $null
-foreach ($root in $sdkRoots) {
-    if (Test-Path $root) {
-        $makeappx = Get-ChildItem "$root\*\x64\makeappx.exe" -ErrorAction SilentlyContinue |
-                    Sort-Object { [version]($_.Directory.Parent.Name) } -Descending |
-                    Select-Object -First 1 -ExpandProperty FullName
-        if ($makeappx) { break }
+# ── 1. Buscar makeappx.exe (Windows SDK o Visual Studio o NuGet) ───────────────
+function Find-MakeAppx {
+    # Windows SDK
+    foreach ($root in @("C:\Program Files (x86)\Windows Kits\10\bin","C:\Program Files\Windows Kits\10\bin")) {
+        $exe = Get-ChildItem "$root\*\x64\makeappx.exe" -ErrorAction SilentlyContinue |
+               Sort-Object { [version]($_.Directory.Parent.Name) } -Descending |
+               Select-Object -First 1 -ExpandProperty FullName
+        if ($exe) { return $exe }
     }
+    # Visual Studio
+    $exe = Get-ChildItem "C:\Program Files\Microsoft Visual Studio\*\*\MSBuild\Microsoft\VisualStudio\*\AppxPackage\makeappx.exe" -ErrorAction SilentlyContinue |
+           Select-Object -First 1 -ExpandProperty FullName
+    if ($exe) { return $exe }
+    # NuGet cache (Microsoft.Windows.SDK.BuildTools)
+    $exe = Get-ChildItem "$env:USERPROFILE\.nuget\packages\microsoft.windows.sdk.buildtools\*\bin\*\x64\makeappx.exe" -ErrorAction SilentlyContinue |
+           Select-Object -First 1 -ExpandProperty FullName
+    return $exe
 }
+
+$makeappx = Find-MakeAppx
 if (-not $makeappx) {
-    Write-Error @"
-No se encontró makeappx.exe.
-Instala el Windows SDK desde:
-https://developer.microsoft.com/windows/downloads/windows-sdk/
-"@
+    Write-Host "makeappx.exe no encontrado. Descargando Microsoft.Windows.SDK.BuildTools via NuGet (~6MB)..."
+    $tmpDir = Join-Path $env:TEMP "qp-sdk-tools"
+    New-Item -ItemType Directory -Force $tmpDir | Out-Null
+    @"
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0-windows</TargetFramework></PropertyGroup>
+  <ItemGroup><PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" /></ItemGroup>
+</Project>
+"@ | Set-Content "$tmpDir\tools.csproj"
+    & dotnet restore "$tmpDir\tools.csproj" | Out-Null
+    Remove-Item $tmpDir -Recurse -Force
+    $makeappx = Find-MakeAppx
+    if (-not $makeappx) { Write-Error "No se pudo obtener makeappx.exe. Instala el Windows SDK manualmente." }
 }
 Write-Host "makeappx: $makeappx"
 
