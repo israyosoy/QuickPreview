@@ -42,7 +42,7 @@ public class VideoHandler : IPreviewHandler
         videoBg.Child = media;
 
         // ── Controls ────────────────────────────────────────────────────────
-        var playBtn = BuildButton("⏸");
+        var playBtn = BuildButton("▶");
         var muteBtn = BuildButton("🔊");
 
         var slider = new Slider
@@ -179,6 +179,8 @@ public class VideoHandler : IPreviewHandler
             var win = Window.GetWindow(media);
             if (win != null)
                 win.Closed += (_, _) => { timer.Stop(); media.Stop(); media.Close(); };
+            // Trigger media open in Manual mode — MediaOpened will call Play() for real autoplay
+            media.Play();
         };
 
         return container;
