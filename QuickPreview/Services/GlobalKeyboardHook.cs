@@ -88,7 +88,10 @@ public sealed class GlobalKeyboardHook : IDisposable
         IntPtr hwnd = GetForegroundWindow();
         var cls = new StringBuilder(256);
         GetClassName(hwnd, cls, cls.Capacity);
-        return cls.ToString() == EXPLORER_CLASS;
+        string c = cls.ToString();
+        // CabinetWClass = normal Explorer folder window
+        // Progman / WorkerW = Windows Desktop
+        return c == EXPLORER_CLASS || c == "Progman" || c == "WorkerW";
     }
 
     private static bool IsTypingInTextBox()

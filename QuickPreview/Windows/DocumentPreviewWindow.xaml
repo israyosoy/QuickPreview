@@ -100,7 +100,7 @@
                                FontFamily="Consolas"
                                VerticalAlignment="Center"/>
                     <TextBlock Text="← → navegar  ·  Esc cerrar"
-                               Foreground="#444444"
+                               Foreground="#909090"
                                FontSize="10"
                                FontFamily="Segoe UI"
                                HorizontalAlignment="Right"

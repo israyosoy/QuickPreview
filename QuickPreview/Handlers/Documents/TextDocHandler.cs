@@ -27,7 +27,10 @@ public class TextDocHandler : IDocumentHandler
             }
             else
             {
-                text = File.ReadAllText(filePath, Encoding.UTF8);
+                // detectEncodingFromByteOrderMarks handles UTF-8, UTF-16, UTF-32 BOM;
+                // falls back to UTF-8 for files without BOM (correct for most source/XML)
+                using var sr = new StreamReader(filePath, detectEncodingFromByteOrderMarks: true);
+                text = sr.ReadToEnd();
             }
 
             string encoded = HtmlBuilder.Encode(text);

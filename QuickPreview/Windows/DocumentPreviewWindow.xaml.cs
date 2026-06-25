@@ -57,12 +57,13 @@ public partial class DocumentPreviewWindow : Window
             settings.IsPasswordAutosaveEnabled = false;
             settings.IsGeneralAutofillEnabled = false;
 
-            // Allow only local content: about: (NavigateToString) and file: (PDF)
+            // Allow only local content: about: (NavigateToString), file: (PDF), or empty URI
             // Block all outbound http/https/ftp navigation
             WebView.CoreWebView2.NavigationStarting += (_, e) =>
             {
                 string uri = e.Uri ?? "";
-                bool allowed = uri.StartsWith("about:", StringComparison.OrdinalIgnoreCase)
+                bool allowed = string.IsNullOrEmpty(uri)
+                            || uri.StartsWith("about:", StringComparison.OrdinalIgnoreCase)
                             || uri.StartsWith("file:", StringComparison.OrdinalIgnoreCase);
                 if (!allowed)
                     e.Cancel = true;
