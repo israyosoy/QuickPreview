@@ -1,4 +1,3 @@
-using Microsoft.Win32;
 using QuickPreview.Handlers;
 using QuickPreview.Services;
 using LruBitmapCache = QuickPreview.Services.BitmapCache;
@@ -121,31 +120,43 @@ public partial class App : System.Windows.Application
     }
 
     // ── Auto-start ───────────────────────────────────────────────────────────
+    // Registry HKCU\Run is virtualized inside MSIX packages and never read by
+    // Windows at startup. The Startup folder is not virtualized and works for
+    // both packaged and unpackaged scenarios.
 
-    private const string AutoStartValue = "QuickPreview";
-    private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
+    private static string StartupLnkPath =>
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.Startup),
+            "QuickPreview.lnk");
 
-    private static bool IsAutoStartEnabled()
-    {
-        using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath);
-        return key?.GetValue(AutoStartValue) != null;
-    }
+    private static bool IsAutoStartEnabled() => File.Exists(StartupLnkPath);
 
     private static void SetAutoStart(bool enabled)
     {
-        using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: true);
-        if (key == null) return;
-        if (enabled)
+        string lnk = StartupLnkPath;
+        if (!enabled)
         {
-            string exe = Environment.ProcessPath
-                ?? Process.GetCurrentProcess().MainModule?.FileName
-                ?? string.Empty;
-            if (exe.Length > 0) key.SetValue(AutoStartValue, $"\"{exe}\"");
+            try { if (File.Exists(lnk)) File.Delete(lnk); } catch { }
+            return;
         }
-        else
+
+        string? exe = Environment.ProcessPath
+                     ?? Process.GetCurrentProcess().MainModule?.FileName;
+        if (string.IsNullOrEmpty(exe)) return;
+
+        try
         {
-            key.DeleteValue(AutoStartValue, throwOnMissingValue: false);
+            // WScript.Shell creates a proper .lnk shortcut without extra dependencies
+            Type? t = Type.GetTypeFromProgID("WScript.Shell");
+            if (t == null) return;
+            dynamic wsh = Activator.CreateInstance(t)!;
+            dynamic sc  = wsh.CreateShortcut(lnk);
+            sc.TargetPath       = exe;
+            sc.WorkingDirectory = Path.GetDirectoryName(exe) ?? string.Empty;
+            sc.Description      = "QuickPreview — Instant File Preview";
+            sc.Save();
         }
+        catch { }
     }
 
     // ── Keyboard events ──────────────────────────────────────────────────────
