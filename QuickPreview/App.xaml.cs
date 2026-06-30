@@ -5,6 +5,7 @@ using QuickPreview.Windows;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
 
@@ -17,10 +18,19 @@ public partial class App : System.Windows.Application
     private Window? _currentPreview;
     private string? _currentFilePath;
     private volatile bool _hasPreview;
+    private Mutex? _singleInstanceMutex;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Prevent duplicate instances (e.g. Startup shortcut + manual launch)
+        _singleInstanceMutex = new Mutex(true, @"Local\QuickPreview_SingleInstance_BorntoStream", out bool isNew);
+        if (!isNew)
+        {
+            Shutdown();
+            return;
+        }
 
         // Catch all unhandled exceptions so the app never vanishes silently
         AppDomain.CurrentDomain.UnhandledException += (_, ex) =>
@@ -44,6 +54,32 @@ public partial class App : System.Windows.Application
         _keyboardHook.PrevFileRequested += () => Dispatcher.BeginInvoke(() => NavigatePreview(-1));
         _keyboardHook.NextFileRequested += () => Dispatcher.BeginInvoke(() => NavigatePreview(+1));
         _keyboardHook.FullscreenToggleRequested += () => Dispatcher.BeginInvoke(OnFullscreenToggle);
+
+        ShowFirstRunNotificationIfNeeded();
+    }
+
+    // ── First-run notification ──────────────────────────────────────────────
+    // Shown exactly once, ever — not on every login. Auto-dismisses on its own
+    // (native NotifyIcon balloon behavior); no click required to close it.
+
+    private static string FirstRunFlagPath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "QuickPreview", "firstrun.done");
+
+    private void ShowFirstRunNotificationIfNeeded()
+    {
+        try
+        {
+            if (File.Exists(FirstRunFlagPath)) return;
+            Directory.CreateDirectory(Path.GetDirectoryName(FirstRunFlagPath)!);
+            File.WriteAllText(FirstRunFlagPath, DateTime.UtcNow.ToString("o"));
+        }
+        catch { return; }
+
+        _trayIcon.BalloonTipTitle = "QuickPreview está activo";
+        _trayIcon.BalloonTipText  = "Selecciona un archivo en el Explorador de Windows y presiona Espacio para previsualizarlo.";
+        _trayIcon.BalloonTipIcon  = ToolTipIcon.Info;
+        _trayIcon.ShowBalloonTip(5000);
     }
 
     // ── Tray icon ─────────────────────────────────────────────────────────────
@@ -299,9 +335,17 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        _trayIcon.Visible = false;
-        _trayIcon.Dispose();
-        _keyboardHook.Dispose();
+        if (_trayIcon != null)
+        {
+            _trayIcon.Visible = false;
+            _trayIcon.Dispose();
+        }
+        _keyboardHook?.Dispose();
+        if (_singleInstanceMutex != null)
+        {
+            try { _singleInstanceMutex.ReleaseMutex(); } catch { }
+            _singleInstanceMutex.Dispose();
+        }
         base.OnExit(e);
     }
 }
