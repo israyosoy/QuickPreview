@@ -36,6 +36,19 @@ function Find-MakeAppx {
     return $exe
 }
 
+function Find-SignTool {
+    $sdkBinDir = Split-Path (Split-Path $makeappx -Parent) -Parent
+    $exe = Get-ChildItem "$sdkBinDir\x64\signtool.exe" -ErrorAction SilentlyContinue |
+           Select-Object -First 1 -ExpandProperty FullName
+    if ($exe) { return $exe }
+    foreach ($root in @("C:\Program Files (x86)\Windows Kits\10\bin","C:\Program Files\Windows Kits\10\bin")) {
+        $exe = Get-ChildItem "$root\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
+               Select-Object -First 1 -ExpandProperty FullName
+        if ($exe) { return $exe }
+    }
+    return $null
+}
+
 $makeappx = Find-MakeAppx
 if (-not $makeappx) {
     Write-Host "makeappx.exe no encontrado. Descargando Microsoft.Windows.SDK.BuildTools via NuGet (~6MB)..."
@@ -98,5 +111,41 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 # ── 6. Limpiar staging ────────────────────────────────────────────────────────
 Remove-Item $stagingDir -Recurse -Force
 
-Write-Host "`n✓ Paquete MSIX generado: $outputMsix"
-Write-Host "  Sube este archivo a Partner Center → tu app → Paquetes → Agregar paquete`n"
+# ── 7. Firmar con certificado de prueba (solo para instalar localmente) ───────
+# El .msix sin firmar NO se puede instalar fuera de la Store (error 0x800B010A).
+# La Store lo re-firma con su propio certificado al publicarlo; este paso solo
+# es para poder probar el paquete en tu propia maquina antes de subirlo.
+$publisher = ([xml](Get-Content "$ProjectRoot\Package\AppxManifest.xml")).Package.Identity.Publisher
+$certDir   = Join-Path $ProjectRoot "Package"
+$pfxPath   = Join-Path $certDir "QuickPreview_TestCert.pfx"
+$cerPath   = Join-Path $certDir "QuickPreview_TestCert.cer"
+$certPwd   = "QuickPreview123!"
+
+$signtool = Find-SignTool
+if ($signtool) {
+    if (-not (Test-Path $pfxPath)) {
+        Write-Host "`nGenerando certificado de prueba (Subject: $publisher)..."
+        $cert = New-SelfSignedCertificate -Type Custom -Subject $publisher `
+            -KeyUsage DigitalSignature -FriendlyName "QuickPreview Test Cert" `
+            -CertStoreLocation "Cert:\CurrentUser\My" `
+            -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3","2.5.29.19={text}")
+        $securePwd = ConvertTo-SecureString -String $certPwd -Force -AsPlainText
+        Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password $securePwd | Out-Null
+        Export-Certificate -Cert $cert -FilePath $cerPath | Out-Null
+        Remove-Item "Cert:\CurrentUser\My\$($cert.Thumbprint)" -Force
+    }
+
+    Write-Host "`nFirmando paquete..."
+    & $signtool sign /fd SHA256 /a /f $pfxPath /p $certPwd $outputMsix | Out-Null
+    if ($LASTEXITCODE -ne 0) { Write-Error "Fallo al firmar el paquete." }
+
+    Write-Host "`nListo! Paquete MSIX generado y firmado: $outputMsix"
+    Write-Host "  Para subir a la Store: usa este archivo en Partner Center > Paquetes (la Store re-firma con su propio certificado)."
+    Write-Host "`n  Para instalarlo LOCALMENTE necesitas confiar en el certificado una sola vez (PowerShell como Administrador):"
+    Write-Host "    Import-Certificate -FilePath `"$cerPath`" -CertStoreLocation Cert:\LocalMachine\Root"
+    Write-Host "  Luego instala el paquete normalmente (doble clic o Add-AppxPackage).`n"
+} else {
+    Write-Host "`nListo! Paquete MSIX generado (sin firmar): $outputMsix"
+    Write-Host "  signtool.exe no se encontro - sube este archivo directo a Partner Center (la Store lo firma)."
+    Write-Host "  Para instalarlo localmente necesitaras firmarlo primero; instala el Windows SDK completo.`n"
+}

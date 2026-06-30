@@ -11,6 +11,10 @@ staging-msix/
 # Generated assets (regenerar con GenerateAssets.ps1)
 QuickPreview/Assets/
 
+# Test signing certificate (local-only, regenerado por Pack-MSIX.ps1)
+Package/QuickPreview_TestCert.pfx
+Package/QuickPreview_TestCert.cer
+
 # Visual Studio
 .vs/
 *.user
