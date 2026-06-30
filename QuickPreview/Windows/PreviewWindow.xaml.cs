@@ -36,6 +36,17 @@ public partial class PreviewWindow : Window
     public PreviewWindow(string filePath, IPreviewHandler handler)
     {
         InitializeComponent();
+
+        // AllowsTransparency forces WPF to compose the whole window via software
+        // (no DWM hardware path for layered windows), which tanks MediaElement
+        // video frame rate to a few fps. Video gets an opaque window instead;
+        // every other content type keeps the transparent rounded-corner look.
+        if (handler is VideoHandler)
+        {
+            AllowsTransparency = false;
+            Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x1E, 0x1E, 0x1E));
+        }
+
         _currentFilePath = filePath;
         SetFileInfo(filePath);
         Loaded += async (_, _) => await LoadContentAsync(filePath, handler);

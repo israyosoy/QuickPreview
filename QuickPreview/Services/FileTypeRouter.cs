@@ -85,12 +85,23 @@ public static class FileTypeRouter
     private static readonly TextDocHandler      _textHandler = new();
     private static readonly SvgDocHandler       _svgHandler  = new();
     private static readonly ZipDocHandler       _zipHandler  = new();
+    private static readonly UnsupportedFormatDocHandler _unsupportedHandler = new();
 
     private static readonly Dictionary<string, IDocumentHandler> _documentHandlers =
         new(StringComparer.OrdinalIgnoreCase)
         {
             // PDF
             [".pdf"] = _pdfHandler,
+            // Adobe Illustrator — modern .ai files are PDF-compatible by default,
+            // so the PDF viewer renders them directly in most cases.
+            [".ai"]  = _pdfHandler,
+            // Adobe formats with no lightweight preview path (proprietary binary layouts)
+            [".psd"]  = _unsupportedHandler,
+            [".psb"]  = _unsupportedHandler,
+            [".eps"]  = _unsupportedHandler,
+            [".indd"] = _unsupportedHandler,
+            [".aep"]  = _unsupportedHandler,
+            [".prproj"] = _unsupportedHandler,
             // Word
             [".docx"] = _wordHandler,
             [".doc"]  = _wordHandler,

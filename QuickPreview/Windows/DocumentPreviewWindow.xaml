@@ -40,6 +40,28 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="ActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#888"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="Transparent" CornerRadius="4" Width="28" Height="28">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#3A3A3A"/>
+                                <Setter Property="Foreground" Value="#CCCCCC"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <!-- Outer border gives 1px dark outline -->
@@ -65,12 +87,15 @@
                                    FontFamily="Segoe UI"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
-                    <Button Style="{StaticResource FlatBtn}"
-                            Content="✕"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Center"
-                            Margin="0,0,8,0"
-                            Click="CloseBtn_Click"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0">
+                        <Button Style="{StaticResource ActionBtn}"
+                                Content="↗"
+                                ToolTip="Abrir con programa predeterminado"
+                                Click="OpenWithBtn_Click"/>
+                        <Button Style="{StaticResource FlatBtn}"
+                                Content="✕"
+                                Click="CloseBtn_Click"/>
+                    </StackPanel>
                 </Grid>
             </Border>
 
@@ -83,7 +108,7 @@
                 <Border x:Name="LoadingPane" Background="#1A1A1A">
                     <TextBlock x:Name="LoadingText"
                                Text="Cargando…"
-                               Foreground="#555555"
+                               Foreground="#AAAAAA"
                                FontSize="14"
                                FontFamily="Segoe UI"
                                HorizontalAlignment="Center"
@@ -95,7 +120,7 @@
             <Border Grid.Row="2" Background="#242424">
                 <Grid Margin="14,0">
                     <TextBlock x:Name="FileInfoText"
-                               Foreground="#666666"
+                               Foreground="#909090"
                                FontSize="10"
                                FontFamily="Consolas"
                                VerticalAlignment="Center"/>

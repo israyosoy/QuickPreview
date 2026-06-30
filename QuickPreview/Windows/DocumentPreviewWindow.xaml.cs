@@ -1,4 +1,5 @@
 using QuickPreview.Handlers.Documents;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
@@ -113,6 +114,16 @@ public partial class DocumentPreviewWindow : Window
     }
 
     private void CloseBtn_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void OpenWithBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(_filePath)) return;
+        try
+        {
+            Process.Start(new ProcessStartInfo(_filePath) { UseShellExecute = true });
+        }
+        catch { }
+    }
 
     private static string FormatSize(long b) => b switch
     {
